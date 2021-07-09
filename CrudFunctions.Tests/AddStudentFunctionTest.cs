@@ -59,16 +59,18 @@ namespace CrudFunctions.Tests
             };
 
             var mockStudentRepo = new Mock<ICosmosRepository<Student>>();
-            mockStudentRepo.Setup(x => x.AddItemAsync(It.IsAny<Student>())).Throws<Exception>();
+            mockStudentRepo.Setup(x => x.AddItemAsync(It.IsAny<Student>())).Throws(new Exception("Une erreur est survenue"));
 
             var request = TestFactory.CreateHttpRequest(new Dictionary<string, StringValues>(),
                 JsonConvert.SerializeObject(json));
 
             //  Act
             var function = new AddStudentFunctionHttpTrigger(mockStudentRepo.Object);
+            Task Act() => function.Run(request, TestFactory.CreateLogger());
 
             //  Assert
-            await Assert.ThrowsAsync<Exception>(async () => await function.Run(request, TestFactory.CreateLogger()));
+            var exception = await Assert.ThrowsAsync<Exception>(Act);
+            Assert.Equal("Une erreur est survenue", exception.Message);
         }
     }
 }
